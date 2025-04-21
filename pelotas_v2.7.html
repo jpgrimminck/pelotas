@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#222" />
+  <title>Prototipo Pelotas</title>
+  <style>
+    html {
+      background-color: #222;
+    }
+    body {
+      margin: 0;
+      background: #222;
+      overflow: hidden;
+    }
+    @media screen and (orientation: portrait) {
+      body::before {
+        content: "Por favor gira tu dispositivo";
+        position: absolute;
+        top: 10%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 24px;
+        text-align: center;
+        z-index: 100;
+      }
+    }
+    #contenedor {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #222;
+      overflow: hidden;
+      z-index: 1;
+    }
+    .pelota {
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      z-index: 0;
+    }
+    .roja { background: red; }
+    .azul { background: blue; }
+    .verde { background: green; }
+    .naranja { background: orange; }
+
+    #lineaReferencia {
+      position: fixed;
+      left: 25vw;
+      top: 0;
+      width: 20px;
+      height: 100vh;
+      background-color: white;
+      z-index: 5;
+    }
+
+    #botonPlay {
+      position: fixed;
+      left: calc(60% + 100px);
+      bottom: 0px;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+    }
+    #version {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      color: #888;
+      font-size: 14px;
+      cursor: pointer;
+      z-index: 10;
+    }
+    #spinner {
+      display: none;
+      position: fixed;
+      bottom: 10px;
+      right: 40px;
+      border: 4px solid #ccc;
+      border-top: 4px solid white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      z-index: 10;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="contenedor">
+    <div id="lineaReferencia"></div>
+  </div>
+  <div id="botonPlay" onclick="togglePlay()">
+    <svg width="72" height="72" viewBox="0 0 24 24" fill="black" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="6,4 20,12 6,20" />
+    </svg>
+  </div>
+  <audio id="audio" src="tu_audio.mp3"></audio>
+  <div id="version" onclick="verificarVersion()">v2.7</div>
+  <div id="spinner"></div>
+
+  <script>
+    const contenedor = document.getElementById("contenedor");
+    const audio = document.getElementById("audio");
+    const botonPlay = document.getElementById("botonPlay");
+    let corriendo = false;
+
+    function crearPelota(color) {
+      const pelota = document.createElement("div");
+      pelota.classList.add("pelota", color);
+      pelota.style.left = "100vw";
+      pelota.style.top = 'calc(50% - 45px)';
+      contenedor.appendChild(pelota);
+
+      let pos = window.innerWidth;
+      const intervalo = setInterval(() => {
+        if (!corriendo) return;
+        pos -= 5;
+        pelota.style.left = pos + "px";
+        if (pos <= -100) {
+          clearInterval(intervalo);
+          pelota.remove();
+        }
+      }, 10);
+    }
+
+    function togglePlay() {
+      if (!corriendo) {
+        corriendo = true;
+        botonPlay.innerHTML = `
+          <svg width="72" height="72" viewBox="0 0 24 24" fill="black" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="4" width="4" height="16"/>
+            <rect x="15" y="4" width="4" height="16"/>
+          </svg>`;
+        audio.play();
+
+        let secuencia = [];
+        const agregarSecuencia = (color, cantidad, inicio) => {
+          for (let i = 0; i < cantidad; i++) {
+            secuencia.push({ color, delay: inicio + i * 1000 });
+          }
+          return inicio + cantidad * 1000 + 2000;
+        };
+
+        let t = 0;
+        t = agregarSecuencia("roja", 8, t);
+        t = agregarSecuencia("naranja", 8, t);
+        t = agregarSecuencia("amarilla", 8, t);
+        t = agregarSecuencia("naranja", 8, t);
+        t = agregarSecuencia("roja", 8, t);
+
+        secuencia.forEach(p => setTimeout(() => crearPelota(p.color), p.delay));
+
+      } else {
+        corriendo = false;
+        botonPlay.innerHTML = `
+          <svg width="72" height="72" viewBox="0 0 24 24" fill="black" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="6,4 20,12 6,20" />
+          </svg>`;
+        audio.pause();
+      }
+    }
+
+    function verificarVersion() {
+      const spinner = document.getElementById("spinner");
+      spinner.style.display = "block";
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
